@@ -137,6 +137,10 @@ Contract.Requires(str != null);
     Console.WriteLine(s{caret}tr);
 }")
 .Returns(true);
+
+            yield return new TestCaseData(
+@"public abstract void Foo(string s{caret}tr);")
+.Returns(false);
         }
 
         private async Task<string> ApplyRefactoring(string fullSource)

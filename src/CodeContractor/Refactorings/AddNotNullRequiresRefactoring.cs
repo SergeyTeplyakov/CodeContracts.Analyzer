@@ -47,7 +47,7 @@ namespace CodeContractor.Refactorings
             }
 
             var semaniticModel = await _document.GetSemanticModelAsync(token);
-            return _parameter.IsNullable(semaniticModel) && !_parameter.IsDefaultedToNull();
+            return _parameter.IsNullable(semaniticModel) && !_parameter.IsDefaultedToNull() && _parameter.DeclaredMethodIsNotAbstract();
         }
 
         public async Task<Document> ApplyRefactoringAsync(CancellationToken token)

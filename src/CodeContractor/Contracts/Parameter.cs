@@ -15,6 +15,7 @@ namespace CodeContractor.Contracts
     {
         public static Parameter Create(SyntaxNode selectedNode)
         {
+            Contract.Requires(selectedNode != null);
             throw new System.Exception();
         }
     }
@@ -48,6 +49,13 @@ namespace CodeContractor.Contracts
         public static bool IsDefaultedToNull(this ParameterSyntax parameter)
         {
             return parameter?.Default?.Value.Kind() == SyntaxKind.NullLiteralExpression;
+        }
+
+        public static bool DeclaredMethodIsNotAbstract(this ParameterSyntax parameter)
+        {
+            var method = parameter.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+
+            return (method as MethodDeclarationSyntax)?.Body != null;
         }
 
         public static ParameterSyntax FindCorrespondingParameterSyntax(this ArgumentSyntax argument, SemanticModel semanticModel)
