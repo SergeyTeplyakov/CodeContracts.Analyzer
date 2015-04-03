@@ -33,12 +33,23 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Contracts\Assertions\IPrecondition.cs" />
+    <Compile Include="Contracts\Assertions\Messages\InvocationMessage.cs" />
+    <Compile Include="Contracts\Assertions\Messages\LiteralMessage.cs" />
+    <Compile Include="Contracts\Assertions\Messages\Message.cs" />
+    <Compile Include="Contracts\Assertions\Messages\MessageExtensions.cs" />
+    <Compile Include="Contracts\Assertions\Messages\NoMessage.cs" />
+    <Compile Include="Contracts\Assertions\Messages\ReferenceMessage.cs" />
+    <Compile Include="Contracts\ContractBlock.cs" />
     <Compile Include="Contracts\Parameter.cs" />
+    <Compile Include="Contracts\Assertions\Precondition.cs" />
+    <Compile Include="Contracts\Assertions\PredicateExpression.cs" />
     <Compile Include="Contracts\RequiresUtils.cs" />
     <Compile Include="Refactorings\AddNotNullRequiresRefactoring.cs" />
     <Compile Include="Refactorings\AddRequires.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\Monadic.cs" />
+    <Compile Include="Utils\Optional.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

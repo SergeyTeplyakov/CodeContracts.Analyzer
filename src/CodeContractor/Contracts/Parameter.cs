@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CodeContractor.Utils;
 using Microsoft.CodeAnalysis.CSharp;
@@ -20,14 +21,15 @@ namespace CodeContractor.Contracts
         }
     }
 
-    public static class ParameterSyntaxEx
+    public static class ParameterSyntaxUtils
     {
         public static bool IsNullable(this ParameterSyntax parameter, SemanticModel semanticModel)
         {
             Contract.Requires(parameter != null);
+            Contract.Requires(parameter.Type != null);
             Contract.Requires(semanticModel != null);
 
-            var typeInfo = ModelExtensions.GetSymbolInfo(semanticModel, parameter.Type).Symbol as ITypeSymbol;
+            var typeInfo = semanticModel.GetSymbolInfo(parameter.Type).Symbol as ITypeSymbol;
 
             if (typeInfo == null)
             {
@@ -42,7 +44,7 @@ namespace CodeContractor.Contracts
             }
 
             // If parameter type is a value type, System.Nulable should be considered
-            var systemNullable = semanticModel.Compilation.GetTypeByMetadataName(typeof (System.Nullable<>).FullName);
+            var systemNullable = semanticModel.Compilation.GetTypeByMetadataName(typeof (Nullable<>).FullName);
             return typeInfo.OriginalDefinition.Equals(systemNullable);
         }
 
@@ -55,31 +57,71 @@ namespace CodeContractor.Contracts
         {
             var method = parameter.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
 
-            return (method as MethodDeclarationSyntax)?.Body != null;
+            return method?.Body != null;
         }
 
-        public static ParameterSyntax FindCorrespondingParameterSyntax(this ArgumentSyntax argument, SemanticModel semanticModel)
+        public static async Task<bool> NotCheckedInMethodContract(this ParameterSyntax parameter, SemanticModel semanticModel, CancellationToken token)
+        {
+            var method = parameter.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+            var contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
+
+            return contractBlock.Preconditions.Any(p => p.ChecksForNotNull(parameter));
+        }
+    }
+
+    public static class ParameterSyntaxEx
+    {
+        public static Optional<ParameterSyntax> FindCorrespondingParameter(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+        {
+            Contract.Requires(syntaxNode != null);
+            var parameter = syntaxNode as ParameterSyntax;
+            if (parameter != null)
+            {
+                return parameter;
+            }
+
+            var argument = syntaxNode as ArgumentSyntax;
+            if (argument != null)
+            {
+                return argument.FindCorrespondingParameter(semanticModel);
+            }
+
+            var identifier = syntaxNode as IdentifierNameSyntax;
+            if (identifier != null)
+            {
+                return identifier.FindCorrespondingParameter(semanticModel);
+            }
+
+            return new Optional<ParameterSyntax>();
+        }
+
+        public static Optional<ParameterSyntax> FindCorrespondingParameter(
+            this IdentifierNameSyntax identifier, SemanticModel semanticModel)
+        {
+            var parameterSymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IParameterSymbol;
+
+            if (parameterSymbol == null || parameterSymbol.Locations.Length == 0)
+            {
+                return new Optional<ParameterSyntax>();
+            }
+
+            var location = parameterSymbol.Locations[0].SourceSpan;
+
+            return identifier.SyntaxTree.GetRoot().FindNode(location) as ParameterSyntax;
+        }
+
+        private static Optional<ParameterSyntax> FindCorrespondingParameter(this ArgumentSyntax argument, SemanticModel semanticModel)
         {
             Contract.Requires(argument != null);
             Contract.Requires(semanticModel != null);
-            
+
             var identifier = argument.Expression as IdentifierNameSyntax;
             if (identifier == null)
             {
                 return null;
             }
 
-            var parameterSymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IParameterSymbol;
-
-            if (parameterSymbol == null || parameterSymbol.Locations.Length == 0)
-            {
-                return null;
-            }
-
-            var location = parameterSymbol.Locations[0].SourceSpan;
-
-            return argument.SyntaxTree.GetRoot().FindNode(location) as ParameterSyntax;
+            return FindCorrespondingParameter(identifier, semanticModel);
         }
-
     }
 }

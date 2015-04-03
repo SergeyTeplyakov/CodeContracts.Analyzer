@@ -20,14 +20,25 @@ namespace CodeContractor.Contracts
             return AddRequires(parameter, method);
         }
 
-        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration)
+        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration, Optional<ExpressionStatementSyntax> anchor = default(Optional<ExpressionStatementSyntax>))
         {
             Contract.Requires(parameter != null);
             Contract.Requires(baseMethodDeclaration != null);
+            Contract.Requires(baseMethodDeclaration.Body != null);
 
             StatementSyntax notNullRequiresStatement = CreateNotNullRequiresFor(parameter).WithAdditionalAnnotations(Formatter.Annotation);
 
-            var newStatements = baseMethodDeclaration.Body.Statements.Insert(0, notNullRequiresStatement);
+            int index = 0;
+
+            // Looking for an anchor in the method body!
+            if (anchor.HasValue)
+            {
+                // New statement should be added after anchor.
+                // If anchor is not find, index would be 0
+                index = baseMethodDeclaration.Body.Statements.IndexOf(anchor.Value) + 1;
+            }
+
+            SyntaxList<StatementSyntax> newStatements = baseMethodDeclaration.Body.Statements.Insert(index, notNullRequiresStatement);
             BlockSyntax body = baseMethodDeclaration.Body.WithStatements(newStatements).WithAdditionalAnnotations(Formatter.Annotation);
 
             var methodDeclaration = baseMethodDeclaration as MethodDeclarationSyntax;

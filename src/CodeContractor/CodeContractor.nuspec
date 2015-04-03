@@ -1,0 +1,26 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>CodeContractor</id>
+    <version>$version$</version>
+    <title>Code Contractor</title>
+    <authors>Sergey Teplyakov</authors>
+    <owners>Sergey Teplyakov</owners>
+    <licenseUrl>https://github.com/SergeyTeplyakov/CodeContractor/blob/master/License</licenseUrl>
+    <projectUrl>https://github.com/SergeyTeplyakov/CodeContractor/</projectUrl>
+    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Tool that simplifies using Code Contracts library.</description>
+    <releaseNotes>
+</releaseNotes>
+    <copyright>Sergey Teplyakov</copyright>
+    <tags>Roslyn, Exception Handling, Best Practices</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework="4.5" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="*.dll" target="tools\analyzers\" exclude="**\Microsoft.CodeAnalysis.*;**\System.Collections.Immutable.*;**\System.Reflection.Metadata.*" />
+    <file src="tools\*.ps1" target="tools\" />
+  </files>
+</package>

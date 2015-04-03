@@ -115,6 +115,7 @@
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Contracts\AddNotNullRequiresRefactoringTests.cs" />
     <Compile Include="Contracts\ClassTemplate.cs" />
+    <Compile Include="Contracts\ContractBlockTests.cs" />
     <Compile Include="Contracts\ParameterTests.cs" />
     <Compile Include="Contracts\RequiresUtilsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

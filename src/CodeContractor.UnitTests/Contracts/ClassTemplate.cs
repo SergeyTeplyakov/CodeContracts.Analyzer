@@ -1,6 +1,9 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.Diagnostics.Contracts;
 
 namespace CodeContractor.UnitTests.Contracts
 {
@@ -19,6 +22,20 @@ internal class SampleClass
   {method}
 }
 ";
+        const string ClassDeclarationTemplateWithContractUsings =
+            @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics.Contracts;
+
+internal class SampleClass
+{
+  {method}
+}
+";
         private Document _document;
         private int _position;
         private SyntaxNode _selectedNode;
@@ -26,6 +43,7 @@ internal class SampleClass
 
         public static Task<ClassTemplate> FromFullSource(string source)
         {
+            Contract.Requires(source != null);
             var position = source.IndexOf("{caret}");
             source = source.Replace("{caret}", "");
 
@@ -52,9 +70,10 @@ internal class SampleClass
             };
         }
 
-        public static Task<ClassTemplate> FromMethodAsync(string method)
+        public static Task<ClassTemplate> FromMethodAsync(string method, bool withContractUsings = false)
         {
-            var source = ClassDeclarationTemplate.Replace("{method}", method);
+            string template = withContractUsings ? ClassDeclarationTemplateWithContractUsings : ClassDeclarationTemplate;
+            var source = template.Replace("{method}", method);
 
             var position = source.IndexOf("{caret}");
             source = source.Replace("{caret}", "");
@@ -65,6 +84,11 @@ internal class SampleClass
         public SyntaxNode Root => _root;
 
         public SyntaxNode SelectedNode => _selectedNode;
+
+        public BaseMethodDeclarationSyntax SelectedMethod()
+        {
+            return SelectedNode.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+        }
 
         public int Position => _position;
 
