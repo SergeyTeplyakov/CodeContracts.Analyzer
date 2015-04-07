@@ -8,7 +8,7 @@ namespace CodeContractor.Contracts.Assertions.Messages
     {
         public static T Match<T>(this Message message,
             Func<LiteralMessage, T> stringFunc,
-            Func<ReferenceMessage, T> referenceFunc,
+            Func<ParameterReferenceMessage, T> referenceFunc,
             Func<InvocationMessage, T> invocationFunc,
             Func<T> noMessageFunc)
         {
@@ -22,7 +22,7 @@ namespace CodeContractor.Contracts.Assertions.Messages
             if (stringMessage != null)
                 return stringFunc(stringMessage);
 
-            var referenceMessage = message as ReferenceMessage;
+            var referenceMessage = message as ParameterReferenceMessage;
             if (referenceMessage != null)
                 return referenceFunc(referenceMessage);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using CodeContractor.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -10,17 +11,17 @@ namespace CodeContractor.Contracts.Assertions.Messages
     /// </summary>
     /// <remarks>
     /// This hierarchy is an OO implementation of the descriminated union with a list of following cases:
-    /// <see cref="NoMessage"/>, <see cref="LiteralMessage"/>, <see cref="ReferenceMessage"/> and 
+    /// <see cref="NoMessage"/>, <see cref="LiteralMessage"/>, <see cref="ParameterReferenceMessage"/> and 
     /// <see cref="InvocationMessage"/>.
     /// </remarks>
     public abstract class Message
     {
-        protected Message(Optional<ExpressionSyntax> originalExpression)
+        protected Message(Option<ExpressionSyntax> originalExpression)
         {
             OriginalExpression = originalExpression;
         }
 
-        public static Message Create(ExpressionSyntax expression)
+        public static Message Create(ArgumentSyntax expression)
         {
             Contract.Requires(expression != null);
             Contract.Ensures(Contract.Result<Message>() != null);
@@ -37,10 +38,9 @@ namespace CodeContractor.Contracts.Assertions.Messages
             //if (invocationExpression != null)
             //    return new InvocationMessage(expression, invocationExpression);
 
-            //return NoMessage.Instance;
-            throw new NotImplementedException();
+            return NoMessage.Instance;
         }
 
-        public Optional<ExpressionSyntax> OriginalExpression { get; }
+        public Option<ExpressionSyntax> OriginalExpression { get; }
     }
 }

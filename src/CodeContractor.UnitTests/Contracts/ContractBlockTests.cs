@@ -10,7 +10,7 @@ namespace CodeContractor.UnitTests.Contracts
     public class ContractBlockTests
     {
         [Test]
-        public async Task TestContractBlockWithSingleRequires()
+        public async Task TestContractBlockWithRequires()
         {
             // Arrange
             string method =
@@ -37,6 +37,26 @@ namespace CodeContractor.UnitTests.Contracts
 
             var third = contractBlock.Preconditions[2];
             Assert.IsFalse(third.ChecksForNotNull(doc.SelectedNode as ParameterSyntax));
+        }
+
+        [Test]
+        public async Task TestContractBlockWithRequiresAndEnsures()
+        {
+            // Arrange
+            string method =
+@"public static string F{caret}oo(string str)
+{
+    Contract.Requires(str != null);
+    Contract.Ensures(Contract.Result<string>() != null, ""Message"");
+}";
+            var doc = await ClassTemplate.FromMethodAsync(method, withContractUsings: true);
+
+            // Act
+            var contractBlock = await ContractBlock.CreateForMethodAsync(doc.SelectedMethod(), doc.SemanticModel);
+
+            // Assert
+            Assert.AreEqual(1, contractBlock.Preconditions.Count);
+            Assert.AreEqual(1, contractBlock.Postconditions.Count);
         }
     }
 }

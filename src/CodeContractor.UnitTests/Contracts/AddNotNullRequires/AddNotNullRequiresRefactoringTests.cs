@@ -8,8 +8,50 @@ using NUnit.Framework;
 namespace CodeContractor.UnitTests.Contracts
 {
     [TestFixture]
-    public class AddNotNullRequiresRefactoringTests
+    public class AddNotNullRequiresRefactoringTests : AddNotNullRequiresTestBase
     {
+        [Test]
+        public async Task AddPreconditionToIndexer()
+        {
+            string src =
+@"abstract class A
+{  
+  public object this[string inde{caret}x]
+  {
+    get
+    {
+      return new object();
+    }
+    set
+    {
+      Consonle.WriteLine(42);
+    }
+  }
+}";
+            var newDocumentString = await ApplyRefactoring(src);
+
+            string expected =
+@"using System.Diagnostics.Contracts;
+abstract class A
+{  
+  public object this[string inde{caret}x]
+  {
+    get
+    {
+      Contract.Requires(indexer != null);
+      return new object();
+    }
+    set
+    {
+      Contract.Requires(indexer != null);
+      Consonle.WriteLine(42);
+    }
+  }
+}";
+            // Please note, that during IDE run Contract.Requires would have required leading trivia
+            Assert.AreEqual(expected, newDocumentString);
+        }
+
         [Test]
         public async Task AddPreconditionAddsAppropriateUsingStatementWithSelectedParameter()
         {
@@ -194,93 +236,5 @@ Contract.Requires(preconditions != null);
             // Please note, that during IDE run Contract.Requires would have required leading trivia
             Assert.AreEqual(expected, newDocumentString);
         }
-
-        [TestCaseSource("RefactoringAvailabilitySource")]
-        public async Task<bool> Test_Refactoring_Availability(string method)
-        {
-            var doc = await ClassTemplate.FromMethodAsync(method);
-            var refactoring = await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.Document);
-
-            return await refactoring.IsAvailableAsync(CancellationToken.None);
-        }
-
-        private static IEnumerable<TestCaseData> RefactoringAvailabilitySource()
-        {
-            yield return new TestCaseData(
-@"public static void Foo(string s{caret}tr)
-{
-}")
-.Returns(true);
-
-            yield return new TestCaseData(
-@"public static void Foo(string str)
-{
-    Console.WriteLine(s{caret}tr);
-}")
-.Returns(true);
-
-            yield return new TestCaseData(
-@"public abstract void Foo(string s{caret}tr);")
-.Returns(false);
-
-            yield return new TestCaseData(
-@"public void Foo(string str)
-{
-    if (s{caret}tr == null)
-    {
-        Console.WriteLine(42);
-    }
-}")
-.Returns(true);
-
-            yield return new TestCaseData(
-@"public void Foo(string s{caret}tr)
-{
-    Contract.Requires(str != null);
-}")
-.Returns(false);
-
-            // Not Implemented yet!
-            yield return new TestCaseData(
-@"public void Foo(string str)
-{
-    Contract.Requires(!string.IsNullOrEmpty(str));
-}")
-.Returns(false).Ignore();
-
-            yield return new TestCaseData(
-@"public void Foo(string str)
-{
-    Contract.Requires(string.IsNullOrEmpty(str));
-}")
-.Returns(false).Ignore();
-
-            // Not Implemented yet!
-            yield return new TestCaseData(
-@"public void Foo(string str)
-{
-    if (str == null) throw new ArgumentNullException(""str"");
-}")
-.Returns(false).Ignore();
-        }
-
-        private async Task<string> ApplyRefactoring(string fullSource)
-        {
-            var doc = await ClassTemplate.FromFullSource(fullSource);
-
-            var refactoring = await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.Document);
-
-            bool isAvailable = await refactoring.IsAvailableAsync(CancellationToken.None);
-            Assert.IsTrue(isAvailable, "Refactoring should be awailable!");
-
-            var newDocument = await refactoring.ApplyRefactoringAsync(CancellationToken.None);
-            var newDocumentString = (await newDocument.GetTextAsync()).ToString();
-
-            // Please note, that during IDE run Contract.Requires would have required leading trivia
-            Console.WriteLine("Refactored document: \r\n" + newDocumentString);
-
-            return newDocumentString;
-        }
-
     }
 }

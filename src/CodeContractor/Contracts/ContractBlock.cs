@@ -16,10 +16,13 @@ namespace CodeContractor.Contracts
     /// </summary>
     public class ContractBlock
     {
-        private ContractBlock(IReadOnlyList<IPrecondition> preconditions)
+        private ContractBlock(IReadOnlyList<IPrecondition> preconditions, IReadOnlyList<ContractEnsures> postconditions)
         {
             Contract.Requires(preconditions != null);
+            Contract.Requires(postconditions != null);
+
             Preconditions = preconditions;
+            Postconditions = postconditions;
         }
 
         public static Task<ContractBlock> CreateForMethodAsync(BaseMethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel, CancellationToken token = default(CancellationToken))
@@ -27,17 +30,21 @@ namespace CodeContractor.Contracts
             Contract.Requires(methodDeclaration != null);
             Contract.Requires(semanticModel != null);
 
-            var preconditions =
+            var contractStatements =
                 methodDeclaration.DescendantNodes()
                     .OfType<ExpressionStatementSyntax>()
-                    .Select(e => ContractRequires.FromExpressionStatement(e, semanticModel))
+                    .Select(e => CodeContractAssertion.Create(e, semanticModel))
                     .Where(x => x.HasValue)
                     .Select(x => x.Value)
                     .ToList();
 
-            return Task.FromResult(new ContractBlock(preconditions));
+            var preconditions = contractStatements.OfType<IPrecondition>().ToList();
+            var postconditions = contractStatements.OfType<ContractEnsures>().ToList();
+
+            return Task.FromResult(new ContractBlock(preconditions, postconditions));
         }
 
         public IReadOnlyList<IPrecondition> Preconditions { get; }
+        public IReadOnlyList<ContractEnsures> Postconditions { get; }
     }
 }

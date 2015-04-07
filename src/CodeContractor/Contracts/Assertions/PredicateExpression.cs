@@ -9,15 +9,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace CodeContractor.Contracts.Assertions
 {
     /// <summary>
-    /// Represents condition for <see cref="ContractAssertion"/>
+    /// Represents condition for any contract assertions like requires, ensures or old-fasion if-throw preconditions.
     /// </summary>
     public sealed class PredicateExpression
     {
-        private PredicateExpression(IReadOnlyList<Tuple<IdentifierNameSyntax, ParameterSyntax>> parametersInUse)
+        private PredicateExpression(IReadOnlyList<PredicateArgument> predicates)
         {
-            Contract.Requires(parametersInUse != null);
-
-            ParametersInUse = parametersInUse;
+            ParametersInUse = predicates;
         }
 
         public static PredicateExpression Create(ArgumentSyntax argumentSyntax, SemanticModel semanticModel)
@@ -25,22 +23,14 @@ namespace CodeContractor.Contracts.Assertions
             Contract.Requires(argumentSyntax != null);
             Contract.Requires(semanticModel != null);
 
-            var parameters =
-                argumentSyntax.DescendantNodes()
-                    .OfType<IdentifierNameSyntax>()
-                    .Select(i => new {Identifier = i, Parameter = i.FindCorrespondingParameter(semanticModel)})
-                    .Where(p => p.Parameter.HasValue)
-                    .Select(p => Tuple.Create(p.Identifier, p.Parameter.Value))
-                    .ToList();
-
-            return new PredicateExpression(parameters);
+            return new PredicateExpression(PredicateArgument.Create(argumentSyntax, semanticModel));
         }
 
         public bool HasNotNullCheck(ParameterSyntax parameterSyntax)
         {
-            foreach (var kvp in ParametersInUse.Where(x => x.Item2.Equals(parameterSyntax)))
+            foreach (var p in ParametersInUse.OfType<ParameterReferenceArgument>().Where(x => x.ReferencedParameter.Equals(parameterSyntax)))
             {
-                var binaryExpression = kvp.Item1.Parent.As(x => x as BinaryExpressionSyntax);
+                var binaryExpression = p.ReferencedParameter.Parent.As(x => x as BinaryExpressionSyntax);
                 if (binaryExpression?.OperatorToken.ToString() == "!=" &&
                     // null literal could on both side of the expression
                     (binaryExpression?.Right.ToString() == "null" || binaryExpression?.Left.ToString() == "null"))
@@ -54,9 +44,9 @@ namespace CodeContractor.Contracts.Assertions
 
         public bool Contains(ParameterSyntax parameterSyntax)
         {
-            return ParametersInUse.Any(x => x.Item2.Equals(parameterSyntax));
+            return ParametersInUse.OfType<ParameterReferenceArgument>().Any(x => x.ReferencedParameter.Equals(parameterSyntax));
         }
 
-        public IReadOnlyList<Tuple<IdentifierNameSyntax, ParameterSyntax>> ParametersInUse { get; }
+        public IReadOnlyList<PredicateArgument> ParametersInUse { get; }
     }
 }

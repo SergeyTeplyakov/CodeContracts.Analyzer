@@ -18,10 +18,15 @@ namespace CodeContractor.Refactorings
         {
             // TODO: Replace the following code with your own analysis, generating a CodeAction for each refactoring to offer
 
-            var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+            SyntaxNode root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
             // Find the node at the selection.
-            var node = root.FindNode(context.Span);
+            SyntaxNode node = root.FindNode(context.Span);
+
+            if (node == null)
+            {
+                return;
+            }
 
             var refactoring = await AddNotNullRequiresRefactoring.Create(node, context.Document);
             bool isAwailable = await refactoring.IsAvailableAsync(context.CancellationToken);

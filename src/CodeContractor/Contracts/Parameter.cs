@@ -71,7 +71,7 @@ namespace CodeContractor.Contracts
 
     public static class ParameterSyntaxEx
     {
-        public static Optional<ParameterSyntax> FindCorrespondingParameter(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+        public static Option<ParameterSyntax> FindCorrespondingParameter(this SyntaxNode syntaxNode, SemanticModel semanticModel)
         {
             Contract.Requires(syntaxNode != null);
             var parameter = syntaxNode as ParameterSyntax;
@@ -92,17 +92,17 @@ namespace CodeContractor.Contracts
                 return identifier.FindCorrespondingParameter(semanticModel);
             }
 
-            return new Optional<ParameterSyntax>();
+            return new Option<ParameterSyntax>();
         }
 
-        public static Optional<ParameterSyntax> FindCorrespondingParameter(
+        public static Option<ParameterSyntax> FindCorrespondingParameter(
             this IdentifierNameSyntax identifier, SemanticModel semanticModel)
         {
             var parameterSymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IParameterSymbol;
 
             if (parameterSymbol == null || parameterSymbol.Locations.Length == 0)
             {
-                return new Optional<ParameterSyntax>();
+                return new Option<ParameterSyntax>();
             }
 
             var location = parameterSymbol.Locations[0].SourceSpan;
@@ -110,7 +110,7 @@ namespace CodeContractor.Contracts
             return identifier.SyntaxTree.GetRoot().FindNode(location) as ParameterSyntax;
         }
 
-        private static Optional<ParameterSyntax> FindCorrespondingParameter(this ArgumentSyntax argument, SemanticModel semanticModel)
+        private static Option<ParameterSyntax> FindCorrespondingParameter(this ArgumentSyntax argument, SemanticModel semanticModel)
         {
             Contract.Requires(argument != null);
             Contract.Requires(semanticModel != null);
@@ -118,7 +118,7 @@ namespace CodeContractor.Contracts
             var identifier = argument.Expression as IdentifierNameSyntax;
             if (identifier == null)
             {
-                return null;
+                return new Option<ParameterSyntax>();
             }
 
             return FindCorrespondingParameter(identifier, semanticModel);

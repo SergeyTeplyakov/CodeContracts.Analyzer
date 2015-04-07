@@ -12,10 +12,10 @@ namespace CodeContractor.Refactorings
 {
     public sealed class AddNotNullRequiresRefactoring
     {
-        private readonly Optional<ParameterSyntax> _parameter;
+        private readonly Option<ParameterSyntax> _parameter;
         private readonly Document _document;
 
-        private AddNotNullRequiresRefactoring(Optional<ParameterSyntax> parameter, Document document)
+        private AddNotNullRequiresRefactoring(Option<ParameterSyntax> parameter, Document document)
         {
             _parameter = parameter;
             _document = document;
@@ -66,13 +66,13 @@ namespace CodeContractor.Refactorings
             return _document.WithSyntaxRoot(rootWithUsings);
         }
 
-        private async Task<Optional<ExpressionStatementSyntax>> GetParentForCurrentParameter(BaseMethodDeclarationSyntax method, CancellationToken token)
+        private async Task<Option<ExpressionStatementSyntax>> GetParentForCurrentParameter(BaseMethodDeclarationSyntax method, CancellationToken token)
         {
-            Optional<ParameterSyntax> previousParameter = GetPreviousParameter(_parameter.Value);
+            Option<ParameterSyntax> previousParameter = GetPreviousParameter(_parameter.Value);
 
             if (!previousParameter.HasValue)
             {
-                return new Optional<ExpressionStatementSyntax>();
+                return new Option<ExpressionStatementSyntax>();
             }
 
             var semanticModel = await _document.GetSemanticModelAsync(token);
@@ -81,7 +81,7 @@ namespace CodeContractor.Refactorings
             return contractBlock.Preconditions.LastOrDefault(p => p.UsesParameter(previousParameter.Value))?.CSharpStatement;
         }
 
-        private Optional<ParameterSyntax> GetPreviousParameter(ParameterSyntax parameter)
+        private Option<ParameterSyntax> GetPreviousParameter(ParameterSyntax parameter)
         {
             var parameters = parameter.Parent.As(x => x as ParameterListSyntax).Parameters;
             bool currentFound = false;
@@ -103,7 +103,7 @@ namespace CodeContractor.Refactorings
                 }
             }
 
-            return new Optional<ParameterSyntax>();
+            return new Option<ParameterSyntax>();
         }
     }
 }

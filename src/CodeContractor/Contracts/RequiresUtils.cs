@@ -20,7 +20,7 @@ namespace CodeContractor.Contracts
             return AddRequires(parameter, method);
         }
 
-        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration, Optional<ExpressionStatementSyntax> anchor = default(Optional<ExpressionStatementSyntax>))
+        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
         {
             Contract.Requires(parameter != null);
             Contract.Requires(baseMethodDeclaration != null);
