@@ -58,8 +58,34 @@ namespace CodeContractor.Contracts
             throw new InvalidOperationException(message);
         }
 
+        public static MethodDeclarationSyntax AddEnsures(MethodDeclarationSyntax methodDeclaration, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
+        {
+            Contract.Requires(methodDeclaration != null);
+            Contract.Requires(methodDeclaration.Body != null);
+
+            StatementSyntax notNullEnsures =
+                CreateNotNullEnsuresFor(methodDeclaration.ReturnType)
+                    .WithAdditionalAnnotations(Formatter.Annotation);
+
+            int index = 0;
+
+            // Looking for an anchor in the method body!
+            if (anchor.HasValue)
+            {
+                // New statement should be added after anchor.
+                // If anchor is not find, index would be 0
+                index = methodDeclaration.Body.Statements.IndexOf(anchor.Value) + 1;
+            }
+
+            SyntaxList<StatementSyntax> newStatements = methodDeclaration.Body.Statements.Insert(index, notNullEnsures);
+            BlockSyntax body = methodDeclaration.Body.WithStatements(newStatements).WithAdditionalAnnotations(Formatter.Annotation);
+
+            return methodDeclaration.WithBody(body).WithAdditionalAnnotations(Formatter.Annotation);
+        }
+
         public static SyntaxNode AddContractNamespaceIfNeeded(SyntaxNode tree)
         {
+            Contract.Ensures(Contract.Result<SyntaxNode>() != null);
             // TODO: super naive pproach
             // Getting all using statements and looking for System there
             var root = tree;
@@ -81,11 +107,50 @@ namespace CodeContractor.Contracts
             var newUsings =
                 compilation.Usings.Add(
                     SyntaxFactory.UsingDirective(
-                        SyntaxFactory.IdentifierName(typeof (Contract).Namespace))
+                        SyntaxFactory.IdentifierName(typeof(Contract).Namespace))
                         .NormalizeWhitespace()
                         .WithTrailingTrivia(SyntaxTriviaList.Create(SyntaxFactory.CarriageReturnLineFeed)));
 
             return tree.ReplaceNode(compilation, compilation.WithUsings(newUsings));
+        }
+
+        private static StatementSyntax CreateNotNullEnsuresFor(TypeSyntax returnType)
+        {
+            Contract.Ensures(Contract.Result<StatementSyntax>() != null);
+
+            var contractType = typeof(Contract);
+            var ensures = SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.IdentifierName(
+                        @"Contract"),
+                    SyntaxFactory.GenericName(
+                        SyntaxFactory.Identifier(
+                            @"Result"))
+                        .WithTypeArgumentList(
+                            SyntaxFactory.TypeArgumentList(
+                                SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
+                                    returnType))))).NormalizeWhitespace();
+
+            var arguments = SyntaxFactory.ArgumentList(
+                SyntaxFactory.SingletonSeparatedList(
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.BinaryExpression(
+                            SyntaxKind.NotEqualsExpression,
+                            ensures,
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)))
+                    ));
+
+            return SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        SyntaxFactory.IdentifierName(contractType.Name),
+                        SyntaxFactory.IdentifierName(@"Ensures")))
+                    .WithArgumentList(arguments))
+                    .NormalizeWhitespace()
+                    .WithTrailingTrivia(SyntaxFactory.CarriageReturnLineFeed)
+                    .WithAdditionalAnnotations(Formatter.Annotation);
         }
 
         private static StatementSyntax CreateNotNullRequiresFor(ParameterSyntax parameter)

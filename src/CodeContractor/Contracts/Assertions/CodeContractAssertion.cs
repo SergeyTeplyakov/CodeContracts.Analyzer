@@ -58,7 +58,8 @@ namespace CodeContractor.Contracts.Assertions
             // Looking for condition expression
             var arguments = expression.Expression.As(x => x as InvocationExpressionSyntax).ArgumentList.Arguments;
 
-            Contract.Assert(arguments.Count != 0, "Contract assertions should have at least one argument");
+            if (arguments.Count == 0)
+                return null;
 
             PredicateExpression predicate = PredicateExpression.Create(arguments[0], semanticModel);
             Message message = Message.Create(arguments.Skip(1).FirstOrDefault());
@@ -113,12 +114,7 @@ namespace CodeContractor.Contracts.Assertions
                 .Expression?.As(x => x as InvocationExpressionSyntax)
                 ?.Expression.As(x => x as MemberAccessExpressionSyntax);
 
-            if (memberAccess == null)
-            {
-                return null;
-            }
-
-            var memberSymbol = memberAccess.As(x => semanticModel.GetSymbolInfo(memberAccess).Symbol as IMethodSymbol);
+            var memberSymbol = memberAccess?.As(x => semanticModel.GetSymbolInfo(x).Symbol as IMethodSymbol);
 
             // Looking for Contract.Requires
             if (memberSymbol?.ToString().StartsWith(typeof(Contract).FullName) == false)

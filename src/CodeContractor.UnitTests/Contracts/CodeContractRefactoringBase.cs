@@ -6,13 +6,15 @@ using NUnit.Framework;
 
 namespace CodeContractor.UnitTests.Contracts
 {
-    public abstract class AddNotNullRequiresTestBase
+    public abstract class CodeContractRefactoringBase
     {
+        internal abstract Task<ICodeContractRefactoring> CreateRefactoringAsync(ClassTemplate doc);
+
         protected async Task<string> ApplyRefactoring(string fullSource)
         {
             var doc = await ClassTemplate.FromFullSource(fullSource);
 
-            var refactoring = await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.Document);
+            var refactoring = await CreateRefactoringAsync(doc);
 
             bool isAvailable = await refactoring.IsAvailableAsync(CancellationToken.None);
             Assert.IsTrue(isAvailable, "Refactoring should be awailable!");

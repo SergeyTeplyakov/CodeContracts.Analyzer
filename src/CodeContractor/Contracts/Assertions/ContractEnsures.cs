@@ -17,13 +17,16 @@ namespace CodeContractor.Contracts.Assertions
             : base(statement, predicateExpression, message)
         {
             //_contractResultArgument =
-            //    predicateExpression.Predicates.Select(p => p.Argument)
+            //    predicateExpression.Select(p => p.Argument)
             //        .OfType<ContractResultPredicateArgument>()
             //        .FirstOrDefault();
         }
 
         public override CodeContractAssertionType CodeContractAssertionType => CodeContractAssertionType.Ensures;
 
+        public IReadOnlyList<TypeSyntax> ContractResultTypes => PredicateExpression.GetContractEnsuresTypes();
+
+        public bool HasNotNullCheck() => PredicateExpression.HasNotNullCheckWithContractResult();
         //public IList<IDeclaredType> ContractResultTypes
         //{
         //    get 

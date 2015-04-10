@@ -10,7 +10,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CodeContractor.Refactorings
 {
-    public sealed class AddNotNullRequiresRefactoring
+    /// <summary>
+    /// Helper class that adds <see cref="Contract.Requires(bool)"/> for nullable parameters values.
+    /// </summary>
+    public sealed class AddNotNullRequiresRefactoring : ICodeContractRefactoring
     {
         private readonly Option<ParameterSyntax> _parameter;
         private readonly Document _document;
@@ -41,8 +44,8 @@ namespace CodeContractor.Refactorings
             var semaniticModel = await _document.GetSemanticModelAsync(token);
             return _parameter.Value.IsNullable(semaniticModel) && 
                   !_parameter.Value.IsDefaultedToNull() && 
-                  _parameter.Value.DeclaredMethodIsNotAbstract() &&
-                  (!await _parameter.Value.NotCheckedInMethodContract(semaniticModel, token));
+                  !_parameter.Value.DeclaredMethodIsAbstract() &&
+                  (!await _parameter.Value.CheckedInMethodContract(semaniticModel, token));
         }
 
         public async Task<Document> ApplyRefactoringAsync(CancellationToken token)

@@ -26,6 +26,14 @@ namespace CodeContractor.Utils
             return func(Value);
         }
 
+        public Option<U> Bind<U>(Func<T, Option<U>> func) where U : class
+        {
+            if (!HasValue)
+                return null;
+
+            return func(Value);
+        }
+
         /// <summary>
         /// Gets a value indicating whether the current object has a value.
         /// </summary>

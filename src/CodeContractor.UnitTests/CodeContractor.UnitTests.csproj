@@ -113,10 +113,12 @@
     <Compile Include="Common\DiagnosticResult.cs" />
     <Compile Include="Common\DiagnosticVerifier.cs" />
     <Compile Include="Common\TestBase.cs" />
+    <Compile Include="Contracts\AddNotNullEnsures\AddNotNullEnsuresAvailabilityTests.cs" />
+    <Compile Include="Contracts\AddNotNullEnsures\AddNotNullEnsuresRefactoringTests.cs" />
     <Compile Include="Contracts\AddNotNullRequires\AddNotNullRequiresAvailabilityTests.cs" />
     <Compile Include="Contracts\AddNotNullRequires\AddNotNullRequiresForIndexersTests.cs" />
     <Compile Include="Contracts\AddNotNullRequires\AddNotNullRequiresRefactoringTests.cs" />
-    <Compile Include="Contracts\AddNotNullRequires\AddNotNullRequiresTestBase.cs" />
+    <Compile Include="Contracts\CodeContractRefactoringBase.cs" />
     <Compile Include="Contracts\ClassTemplate.cs" />
     <Compile Include="Contracts\ContractBlockTests.cs" />
     <Compile Include="Contracts\RequiresUtilsTests.cs" />

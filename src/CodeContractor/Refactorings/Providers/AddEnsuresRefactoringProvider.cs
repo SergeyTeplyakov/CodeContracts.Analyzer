@@ -11,13 +11,11 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace CodeContractor.Refactorings
 {
-    [ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(CodeContractorCodeRefactoringProvider)), Shared]
-    public sealed class CodeContractorCodeRefactoringProvider : CodeRefactoringProvider
+    [ExportCodeRefactoringProvider(LanguageNames.CSharp, Name = nameof(AddEnsuresRefactoringProvider)), Shared]
+    public sealed class AddEnsuresRefactoringProvider : CodeRefactoringProvider
     {
-        public sealed override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
+        public override async Task ComputeRefactoringsAsync(CodeRefactoringContext context)
         {
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each refactoring to offer
-
             SyntaxNode root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
             // Find the node at the selection.
@@ -28,13 +26,13 @@ namespace CodeContractor.Refactorings
                 return;
             }
 
-            var refactoring = await AddNotNullRequiresRefactoring.Create(node, context.Document);
+            var refactoring = await AddNotNullEnsuresRefactoring.Create(node, context.Document);
             bool isAwailable = await refactoring.IsAvailableAsync(context.CancellationToken);
 
             if (isAwailable)
             {
                 // For any type declaration node, create a code action to reverse the identifier text.
-                var action = CodeAction.Create("Add Requires", c => refactoring.ApplyRefactoringAsync(context.CancellationToken));
+                var action = CodeAction.Create("Add not-null Contract.Ensures", c => refactoring.ApplyRefactoringAsync(context.CancellationToken));
 
                 // Register this code action.
                 context.RegisterRefactoring(action);

@@ -31,14 +31,42 @@ namespace CodeContractor.Contracts.Assertions
 
         private static Option<PredicateArgument> Create(ArgumentSyntax argument, SyntaxNode node, SemanticModel semanticModel)
         {
+            Contract.Requires(argument != null);
             Contract.Requires(node != null);
+            Contract.Requires(semanticModel != null);
 
             var identifier = node as IdentifierNameSyntax;
             if (identifier != null)
             {
-                var parameter = identifier.FindCorrespondingParameter(semanticModel);
+                return
+                    identifier.FindCorrespondingParameter(semanticModel)
+                    .Bind(parameter => (PredicateArgument)new ParameterReferenceArgument(argument, identifier, parameter));
+            }
 
-                return parameter.Bind(x => (PredicateArgument)new ParameterReferenceArgument(argument, identifier, x));
+            var invocationExpression = node as InvocationExpressionSyntax;
+            if (invocationExpression != null)
+            {
+                var memberAccess = invocationExpression.Expression.As(x => x as MemberAccessExpressionSyntax);
+                var memberSymbol =
+                    invocationExpression
+                    .Expression.As(x => x as MemberAccessExpressionSyntax)
+                    ?.As(x => semanticModel.GetSymbolInfo(x).Symbol as IMethodSymbol);
+
+                // Looking for Contract.Requires
+                if (memberSymbol?.ToString().StartsWith(typeof(Contract).FullName) == false)
+                {
+                    return null;
+                }
+
+                var result = memberAccess.Name.As(x => x as GenericNameSyntax);
+                if (result == null || result.Identifier.ToString() != "Result")
+                {
+                    return null;
+                }
+
+                TypeSyntax type = result.TypeArgumentList.Arguments.First();
+                
+                return new Option<PredicateArgument>(new ContractResultPredicateArgument(argument, type));
             }
 
             return null;
@@ -64,7 +92,9 @@ namespace CodeContractor.Contracts.Assertions
         public ParameterReferenceArgument(ArgumentSyntax argument, IdentifierNameSyntax identifier, ParameterSyntax referencedParameter)
             : base(argument)
         {
+            Contract.Requires(identifier != null);
             Contract.Requires(referencedParameter != null);
+
             Identifier = identifier;
             ReferencedParameter = referencedParameter;
         }
@@ -79,13 +109,15 @@ namespace CodeContractor.Contracts.Assertions
     /// </summary>
     public sealed class ContractResultPredicateArgument : PredicateArgument
     {
-        //private readonly IDeclaredType _resultTypeName;
-        //private readonly IReferenceExpression _contractResultReference;
-
-        public ContractResultPredicateArgument(ArgumentSyntax argument)
+        public ContractResultPredicateArgument(ArgumentSyntax argument, TypeSyntax genericResultType)
             : base(argument)
         {
+            Contract.Requires(genericResultType != null);
+
+            ResultType = genericResultType;
         }
+
+        public TypeSyntax ResultType { get; }
     }
 
     //    public IDeclaredType ResultType

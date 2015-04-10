@@ -48,13 +48,17 @@
     <Compile Include="Contracts\Assertions\Messages\ParameterReferenceMessage.cs" />
     <Compile Include="Contracts\Assertions\PredicateArgument.cs" />
     <Compile Include="Contracts\ContractBlock.cs" />
+    <Compile Include="Contracts\ExpressionUtils.cs" />
     <Compile Include="Contracts\Parameter.cs" />
     <Compile Include="Contracts\Assertions\ContractRequires.cs" />
     <Compile Include="Contracts\Assertions\PredicateExpression.cs" />
     <Compile Include="Contracts\RequiresUtils.cs" />
+    <Compile Include="Refactorings\AddNotNullEnsuresRefactoring.cs" />
     <Compile Include="Refactorings\AddNotNullRequiresRefactoring.cs" />
-    <Compile Include="Refactorings\AddRequires.cs" />
+    <Compile Include="Refactorings\Providers\AddEnsuresRefactoringProvider.cs" />
+    <Compile Include="Refactorings\Providers\AddRequiresRefactoringProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Refactorings\ICodeContractRefactoring.cs" />
     <Compile Include="Utils\Monadic.cs" />
     <Compile Include="Utils\Option.cs" />
   </ItemGroup>

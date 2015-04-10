@@ -26,7 +26,7 @@ namespace CodeContractor.UnitTests.Refactorings
 
             var actions = new List<CodeAction>();
             var context = new CodeRefactoringContext(doc.Document, doc.SelectedNode.Span, (a) => actions.Add(a), CancellationToken.None);
-            var provider = new CodeContractor.Refactorings.CodeContractorCodeRefactoringProvider();
+            var provider = new CodeContractor.Refactorings.AddRequiresRefactoringProvider();
             provider.ComputeRefactoringsAsync(context).Wait();
 
             if (actions.Count != 0)
@@ -47,7 +47,7 @@ namespace CodeContractor.UnitTests.Refactorings
         //    var span = new TextSpan(1, 10);
         //    var actions = new List<CodeAction>();
         //    var context = new CodeRefactoringContext(document, span, (a) => actions.Add(a), CancellationToken.None);
-        //    var provider = new CodeContractor.Refactorings.CodeContractorCodeRefactoringProvider();
+        //    var provider = new CodeContractor.Refactorings.AddRequiresRefactoringProvider();
         //    provider.ComputeRefactoringsAsync(context).Wait();
 
 

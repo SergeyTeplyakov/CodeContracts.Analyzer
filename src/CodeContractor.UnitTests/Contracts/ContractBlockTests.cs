@@ -48,15 +48,19 @@ namespace CodeContractor.UnitTests.Contracts
 {
     Contract.Requires(str != null);
     Contract.Ensures(Contract.Result<string>() != null, ""Message"");
+    Contract.Ensures(Contract.Result<string>().Length != 0, ""Message"");
+    Contract.Ensures(Contract.Result<string>() != null || Contract.Result<string>().Length != 0, ""Message"");
 }";
             var doc = await ClassTemplate.FromMethodAsync(method, withContractUsings: true);
-
+            
             // Act
             var contractBlock = await ContractBlock.CreateForMethodAsync(doc.SelectedMethod(), doc.SemanticModel);
 
             // Assert
-            Assert.AreEqual(1, contractBlock.Preconditions.Count);
-            Assert.AreEqual(1, contractBlock.Postconditions.Count);
+            Assert.AreEqual(3, contractBlock.Postconditions.Count);
+            Assert.IsTrue(contractBlock.Postconditions[0].HasNotNullCheck());
+            Assert.IsFalse(contractBlock.Postconditions[1].HasNotNullCheck());
+            Assert.IsTrue(contractBlock.Postconditions[2].HasNotNullCheck());
         }
     }
 }

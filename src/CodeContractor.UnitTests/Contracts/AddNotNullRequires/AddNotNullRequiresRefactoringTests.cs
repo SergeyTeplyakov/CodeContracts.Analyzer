@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace CodeContractor.UnitTests.Contracts
 {
     [TestFixture]
-    public class AddNotNullRequiresRefactoringTests : AddNotNullRequiresTestBase
+    public class AddNotNullRequiresRefactoringTests : CodeContractRefactoringBase
     {
         [Test]
         public async Task AddPreconditionToIndexer()
@@ -235,6 +235,11 @@ Contract.Requires(preconditions != null);
 }";
             // Please note, that during IDE run Contract.Requires would have required leading trivia
             Assert.AreEqual(expected, newDocumentString);
+        }
+
+        internal override async Task<ICodeContractRefactoring> CreateRefactoringAsync(ClassTemplate doc)
+        {
+            return await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.Document);
         }
     }
 }

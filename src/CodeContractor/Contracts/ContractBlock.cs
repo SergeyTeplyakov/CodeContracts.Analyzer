@@ -29,6 +29,7 @@ namespace CodeContractor.Contracts
         {
             Contract.Requires(methodDeclaration != null);
             Contract.Requires(semanticModel != null);
+            Contract.Ensures(Contract.Result<ContractBlock>() != null);
 
             var contractStatements =
                 methodDeclaration.DescendantNodes()

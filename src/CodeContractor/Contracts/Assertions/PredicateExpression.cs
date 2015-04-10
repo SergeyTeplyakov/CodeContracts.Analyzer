@@ -30,16 +30,34 @@ namespace CodeContractor.Contracts.Assertions
         {
             foreach (var p in ParametersInUse.OfType<ParameterReferenceArgument>().Where(x => x.ReferencedParameter.Equals(parameterSyntax)))
             {
-                var binaryExpression = p.ReferencedParameter.Parent.As(x => x as BinaryExpressionSyntax);
-                if (binaryExpression?.OperatorToken.ToString() == "!=" &&
-                    // null literal could on both side of the expression
-                    (binaryExpression?.Right.ToString() == "null" || binaryExpression?.Left.ToString() == "null"))
-                {
-                    return true;
-                }
+                return 
+                    p.Argument.DescendantNodesAndSelf().OfType<BinaryExpressionSyntax>()
+                        .Any(be => be.OperatorToken.ToString() == "!=" &&
+                                   // null literal could on both side of the expression
+                                   (be.Right.ToString() == "null" || be.Left.ToString() == "null"));
             }
 
             return false;
+        }
+
+        public bool HasNotNullCheckWithContractResult()
+        {
+            foreach (var p in ParametersInUse.OfType<ContractResultPredicateArgument>())
+            {
+                // Super naive!! Should be added a check for other side of the expression!
+                return
+                    p.Argument.DescendantNodesAndSelf().OfType<BinaryExpressionSyntax>()
+                        .Any(be => be.OperatorToken.ToString() == "!=" &&
+                                   // null literal could on both side of the expression
+                                   (be.Right.ToString() == "null" || be.Left.ToString() == "null"));
+            }
+
+            return false;
+        }
+
+        public IReadOnlyList<TypeSyntax> GetContractEnsuresTypes()
+        {
+            return ParametersInUse.OfType<ContractResultPredicateArgument>().Select(x => x.ResultType).ToList();
         }
 
         public bool Contains(ParameterSyntax parameterSyntax)
