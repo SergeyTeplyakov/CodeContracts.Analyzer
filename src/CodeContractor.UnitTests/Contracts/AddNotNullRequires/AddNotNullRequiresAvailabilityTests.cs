@@ -78,7 +78,7 @@ namespace CodeContractor.UnitTests.Contracts
 .Returns(false).Ignore();
 
             yield return new TestCaseData(
-@"public void EnabledOnParamsArguments(params object[] arguments{caret})
+@"public void EnabledOnParamsArguments(params object[] argume{caret}nts)
   {}")
 .Returns(true);
 
