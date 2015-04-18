@@ -110,8 +110,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\CodeFixVerifier.cs" />
+    <Compile Include="Common\CodeFixVerifier.Helper.cs" />
     <Compile Include="Common\DiagnosticResult.cs" />
     <Compile Include="Common\DiagnosticVerifier.cs" />
+    <Compile Include="Common\StringEx.cs" />
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Contracts\AddNotNullEnsures\AddNotNullEnsuresAvailabilityTests.cs" />
     <Compile Include="Contracts\AddNotNullEnsures\AddNotNullEnsuresRefactoringTests.cs" />
@@ -127,6 +129,7 @@
     <Compile Include="RoslynTestsUtils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\DiagnosticVerifier.Helper.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -136,7 +139,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Contracts\Preconditions\" />
+    <Folder Include="Analyzers\" />
     <Folder Include="Helpers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

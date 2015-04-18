@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Analyzers\Core\PublicMethodContractAnalyzer.cs" />
     <Compile Include="Contracts\Assertions\CodeContractAssertion.cs" />
     <Compile Include="Contracts\Assertions\CodeContractAssertionType.cs" />
     <Compile Include="Contracts\Assertions\ContractAssertion.cs" />

@@ -12,11 +12,12 @@ namespace CodeContractor.UnitTests.Common
         {
             if (line < 0 && column < 0)
             {
-                throw new ArgumentOutOfRangeException("At least one of line and column must be > 0");
+                throw new ArgumentOutOfRangeException("At least one of line and column must be > 0", line < 0 ? nameof(line) : nameof(column));
             }
+
             if (line < -1 || column < -1)
             {
-                throw new ArgumentOutOfRangeException("Both line and column must be >= -1");
+                throw new ArgumentOutOfRangeException("Both line and column must be >= -1", line < -1 ? nameof(line) : nameof(column));
             }
 
             Path = path;
@@ -24,9 +25,9 @@ namespace CodeContractor.UnitTests.Common
             Column = column;
         }
 
-        public string Path { get; set; }
-        public int Line { get; set; }
-        public int Column { get; set; }
+        public string Path { get; private set; }
+        public int Line { get; private set; }
+        public int Column { get; private set; }
     }
 
     /// <summary>
@@ -34,22 +35,22 @@ namespace CodeContractor.UnitTests.Common
     /// </summary>
     public struct DiagnosticResult
     {
-        private DiagnosticResultLocation[] locations;
+        private DiagnosticResultLocation[] _locations;
 
         public DiagnosticResultLocation[] Locations
         {
             get
             {
-                if (locations == null)
+                if (_locations == null)
                 {
-                    locations = new DiagnosticResultLocation[] { };
+                    _locations = new DiagnosticResultLocation[] { };
                 }
-                return locations;
+                return _locations;
             }
 
             set
             {
-                locations = value;
+                _locations = value;
             }
         }
 
@@ -59,28 +60,10 @@ namespace CodeContractor.UnitTests.Common
 
         public string Message { get; set; }
 
-        public string Path
-        {
-            get
-            {
-                return Locations.Length > 0 ? Locations[0].Path : "";
-            }
-        }
+        public string Path => Locations.Length > 0 ? Locations[0].Path : "";
 
-        public int Line
-        {
-            get
-            {
-                return Locations.Length > 0 ? Locations[0].Line : -1;
-            }
-        }
+        public int Line => Locations.Length > 0 ? Locations[0].Line : -1;
 
-        public int Column
-        {
-            get
-            {
-                return Locations.Length > 0 ? Locations[0].Column : -1;
-            }
-        }
+        public int Column => Locations.Length > 0 ? Locations[0].Column : -1;
     }
 }
