@@ -13,7 +13,7 @@ namespace CodeContractor.UnitTests.Contracts.AddNotNullEnsures
         public async Task<bool> Test_Refactoring_Availability(string method)
         {
             var doc = await ClassTemplate.FromMethodAsync(method);
-            var refactoring = await AddNotNullEnsuresRefactoring.Create(doc.SelectedNode, doc.Document);
+            var refactoring = await AddNotNullEnsuresRefactoring.Create(doc.SelectedNode, doc.SemanticModel);
 
             return await refactoring.IsAvailableAsync(CancellationToken.None);
         }

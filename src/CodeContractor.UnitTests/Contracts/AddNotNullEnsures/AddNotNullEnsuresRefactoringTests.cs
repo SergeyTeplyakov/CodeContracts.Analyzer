@@ -148,7 +148,7 @@ Contract.Ensures(Contract.Result<int ? >() != null);
 
         internal override async Task<ICodeContractRefactoring> CreateRefactoringAsync(ClassTemplate doc)
         {
-            return await AddNotNullEnsuresRefactoring.Create(doc.SelectedNode, doc.Document);
+            return await AddNotNullEnsuresRefactoring.Create(doc.SelectedNode, doc.SemanticModel);
         }
     }
 }

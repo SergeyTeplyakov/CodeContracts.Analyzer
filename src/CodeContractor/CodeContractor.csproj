@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>CodeContractor.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,9 +32,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>CodeContractor.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Analyzers\Core\PublicMethodContractAnalyzer.cs" />
+    <Compile Include="Analyzers\Core\MethodResultNotNullAnalyzer.cs" />
+    <Compile Include="Analyzers\Core\MethodArgumentNotNullAnalyzer.cs" />
+    <Compile Include="Analyzers\Core\PublicMethodContractAnalyzerCodeFixProvider.cs" />
     <Compile Include="Contracts\Assertions\CodeContractAssertion.cs" />
     <Compile Include="Contracts\Assertions\CodeContractAssertionType.cs" />
     <Compile Include="Contracts\Assertions\ContractAssertion.cs" />
@@ -64,6 +68,7 @@
     <Compile Include="Utils\Option.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CodeContractor.ruleset" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

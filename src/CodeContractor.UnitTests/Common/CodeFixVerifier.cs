@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using CodeContractor.UnitTests.Contracts;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -21,13 +22,11 @@ namespace CodeContractor.UnitTests.Common
     public abstract partial class CodeFixVerifier : DiagnosticVerifier
     {
         #region To be implemented by Test classes
+
         /// <summary>
         /// Get the CSharp analyzer being tested - to be implemented in non-abstract class
         /// </summary>
-        protected virtual DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
-        {
-            return null;
-        }
+        protected abstract DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer();
 
         /// <summary>
         /// Get the Visual Basic analyzer being tested (C#) - to be implemented in non-abstract class
@@ -79,9 +78,39 @@ namespace CodeContractor.UnitTests.Common
             return GetSortedDiagnostics(source).Length != 0;
         }
 
+        protected void ValidateDiagnostics(ClassTemplate template)
+        {
+            var enabledDiagnostics = template.DiagnosticPositions.Select(x => (int?)x).ToList();
+
+            var diagnostics = GetSortedDiagnostics(template.Source);
+
+            foreach (var diagnostic in diagnostics)
+            {
+                var location = diagnostic.Location.SourceSpan;
+
+                int? pos = enabledDiagnostics.FirstOrDefault(x => location.Start <= x && location.End >= x);
+                if (pos == null)
+                {
+                    throw new InvalidOperationException($"Not expected diagnostic at {diagnostic.Location}");
+                }
+
+                enabledDiagnostics.Remove(pos);
+            }
+
+            if (enabledDiagnostics.Count != 0)
+            {
+                throw new InvalidOperationException($"Expected diagnostics at {string.Join(",", enabledDiagnostics)} are not found.");
+            }
+        }
+
         protected Diagnostic[] GetSortedDiagnostics(string source)
         {
-            return GetSortedDiagnostics(source.Replace("{on}", ""));
+            // TODO: currently this method return all diagnostics. Maybe result should have diagnostics only for current analyzer
+            string id = GetDiagnosticAnalyzer().SupportedDiagnostics.First().Id;
+
+            var fixedSources = source.Replace("{on}", "");
+
+            return GetSortedDiagnostics(new [] {fixedSources}, LanguageNames.CSharp, GetCSharpDiagnosticAnalyzer());
         }
 
         protected bool HasWarning(string source, string diagnosticId)
@@ -204,6 +233,8 @@ namespace CodeContractor.UnitTests.Common
         where U : CodeFixProvider, new()
     {
         protected override sealed DiagnosticAnalyzer GetDiagnosticAnalyzer() => new T();
+        protected override sealed DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() => new T();
+
 
         protected override sealed CodeFixProvider GetCSharpCodeFixProvider() => new U();
     }

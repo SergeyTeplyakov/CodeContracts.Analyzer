@@ -19,7 +19,7 @@ namespace CodeContractor.UnitTests.Contracts
             bool isAvailable = await refactoring.IsAvailableAsync(CancellationToken.None);
             Assert.IsTrue(isAvailable, "Refactoring should be awailable!");
 
-            var newDocument = await refactoring.ApplyRefactoringAsync(CancellationToken.None);
+            var newDocument = await refactoring.ApplyRefactoringAsync(doc.Document, CancellationToken.None);
             var newDocumentString = (await newDocument.GetTextAsync()).ToString();
 
             // Please note, that during IDE run Contract.Requires would have required leading trivia
