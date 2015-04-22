@@ -26,13 +26,13 @@ namespace CodeContractor.Refactorings
                 return;
             }
 
-            var refactoring = await AddNotNullEnsuresRefactoring.Create(node, context.Document);
+            var refactoring = await AddNotNullEnsuresRefactoring.Create(node, await context.Document.GetSemanticModelAsync());
             bool isAwailable = await refactoring.IsAvailableAsync(context.CancellationToken);
 
             if (isAwailable)
             {
                 // For any type declaration node, create a code action to reverse the identifier text.
-                var action = CodeAction.Create("Add not-null Contract.Ensures", c => refactoring.ApplyRefactoringAsync(context.CancellationToken));
+                var action = CodeAction.Create("Add not-null Contract.Ensures", c => refactoring.ApplyRefactoringAsync(context.Document, context.CancellationToken));
 
                 // Register this code action.
                 context.RegisterRefactoring(action);

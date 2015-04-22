@@ -43,7 +43,6 @@ namespace CodeContractor.Utils
         /// <summary>
         /// Gets the value of the current object.
         /// </summary>
-        /// <returns></returns>
         public T Value { get; }
 
         /// <summary>

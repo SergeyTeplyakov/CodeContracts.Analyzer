@@ -9,7 +9,7 @@ namespace CodeContractor.UnitTests.Contracts.AddNotNullEnsures
     [TestFixture]
     public class AddNotNullEnsuresAvailabilityTests
     {
-        [TestCaseSource("RefactoringAvailabilitySource")]
+        [TestCaseSource(nameof(RefactoringAvailabilitySource))]
         public async Task<bool> Test_Refactoring_Availability(string method)
         {
             var doc = await ClassTemplate.FromMethodAsync(method);
@@ -52,6 +52,21 @@ namespace CodeContractor.UnitTests.Contracts.AddNotNullEnsures
 @"public static int Foo(string sr)
 {
   re{caret}turn 42;
+}")
+.Returns(false);
+
+            // Tasks are treated differently! Tool should add checks for underlying value, but for task itself
+            yield return new TestCaseData(
+@"public static async Task<int> Foo(string sr)
+{
+  re{caret}turn 42;
+}")
+.Returns(false);
+
+            yield return new TestCaseData(
+@"public static async Task Foo(string sr)
+{
+  re{caret}turn;
 }")
 .Returns(false);
         }

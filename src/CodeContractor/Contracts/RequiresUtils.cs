@@ -58,13 +58,13 @@ namespace CodeContractor.Contracts
             throw new InvalidOperationException(message);
         }
 
-        public static MethodDeclarationSyntax AddEnsures(MethodDeclarationSyntax methodDeclaration, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
+        public static MethodDeclarationSyntax AddEnsures(MethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
         {
             Contract.Requires(methodDeclaration != null);
             Contract.Requires(methodDeclaration.Body != null);
 
             StatementSyntax notNullEnsures =
-                CreateNotNullEnsuresFor(methodDeclaration.ReturnType)
+                CreateNotNullEnsuresFor(methodDeclaration.UnwrapReturnTypeIfNeeded(semanticModel))
                     .WithAdditionalAnnotations(Formatter.Annotation);
 
             int index = 0;

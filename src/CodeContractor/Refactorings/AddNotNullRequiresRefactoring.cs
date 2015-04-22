@@ -16,22 +16,21 @@ namespace CodeContractor.Refactorings
     public sealed class AddNotNullRequiresRefactoring : ICodeContractRefactoring
     {
         private readonly Option<ParameterSyntax> _parameter;
-        private readonly Document _document;
+        private readonly SemanticModel _semanticModel;
 
-        private AddNotNullRequiresRefactoring(Option<ParameterSyntax> parameter, Document document)
+        private AddNotNullRequiresRefactoring(Option<ParameterSyntax> parameter, SemanticModel semanticModel)
         {
             _parameter = parameter;
-            _document = document;
+            _semanticModel = semanticModel;
         }
 
-        public static async Task<AddNotNullRequiresRefactoring> Create(SyntaxNode node, Document document, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<AddNotNullRequiresRefactoring> Create(SyntaxNode node, SemanticModel semanticModel, CancellationToken cancellationToken = default(CancellationToken))
         {
             Contract.Requires(node != null);
-            Contract.Requires(document != null);
+            Contract.Requires(semanticModel != null);
+            Contract.Ensures(Contract.Result<AddNotNullRequiresRefactoring>() != null);
 
-            SemanticModel model = await document.GetSemanticModelAsync(cancellationToken);
-
-            return new AddNotNullRequiresRefactoring(node.FindCorrespondingParameter(model), document);
+            return Task.FromResult(new AddNotNullRequiresRefactoring(node.FindCorrespondingParameter(semanticModel), semanticModel));
         }
 
         public async Task<bool> IsAvailableAsync(CancellationToken token)
@@ -41,14 +40,13 @@ namespace CodeContractor.Refactorings
                 return false;
             }
 
-            var semaniticModel = await _document.GetSemanticModelAsync(token);
-            return _parameter.Value.IsNullable(semaniticModel) && 
+            return _parameter.Value.IsNullable(_semanticModel) && 
                   !_parameter.Value.IsDefaultedToNull() && 
                   !_parameter.Value.DeclaredMethodIsAbstract() &&
-                  (!await _parameter.Value.CheckedInMethodContract(semaniticModel, token));
+                  (!await _parameter.Value.CheckedInMethodContract(_semanticModel, token));
         }
 
-        public async Task<Document> ApplyRefactoringAsync(CancellationToken token)
+        public async Task<Document> ApplyRefactoringAsync(Document document, CancellationToken token)
         {
             Contract.Assert(_parameter.HasValue);
 
@@ -56,20 +54,22 @@ namespace CodeContractor.Refactorings
 
             if (method == null)
             {
-                return _document;
+                return document;
             }
 
-            SyntaxNode root = await _document.GetSyntaxRootAsync(token);
+            SyntaxNode root = await document.GetSyntaxRootAsync(token);
 
-            var parent = await GetParentForCurrentParameter(method, token);
+            var parent = await GetParentForCurrentParameter(document, method, token);
 
             var rootWithRequires = root.ReplaceNode(method, RequiresUtils.AddRequires(_parameter.Value, method, parent));
             var rootWithUsings = RequiresUtils.AddContractNamespaceIfNeeded(rootWithRequires);
 
-            return _document.WithSyntaxRoot(rootWithUsings);
+            return document.WithSyntaxRoot(rootWithUsings);
         }
 
-        private async Task<Option<ExpressionStatementSyntax>> GetParentForCurrentParameter(BaseMethodDeclarationSyntax method, CancellationToken token)
+        public Option<ParameterSyntax> Parameter => _parameter;
+
+        private async Task<Option<ExpressionStatementSyntax>> GetParentForCurrentParameter(Document document, BaseMethodDeclarationSyntax method, CancellationToken token)
         {
             Option<ParameterSyntax> previousParameter = GetPreviousParameter(_parameter.Value);
 
@@ -78,7 +78,7 @@ namespace CodeContractor.Refactorings
                 return new Option<ExpressionStatementSyntax>();
             }
 
-            var semanticModel = await _document.GetSemanticModelAsync(token);
+            var semanticModel = await document.GetSemanticModelAsync(token);
             var contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
 
             return contractBlock.Preconditions.LastOrDefault(p => p.UsesParameter(previousParameter.Value))?.CSharpStatement;

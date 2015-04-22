@@ -7,6 +7,6 @@ namespace CodeContractor.Refactorings
     public interface ICodeContractRefactoring
     {
         Task<bool> IsAvailableAsync(CancellationToken token);
-        Task<Document> ApplyRefactoringAsync(CancellationToken token);
+        Task<Document> ApplyRefactoringAsync(Document document, CancellationToken token);
     }
 }

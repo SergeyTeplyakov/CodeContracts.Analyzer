@@ -23,6 +23,19 @@ namespace CodeContractor.Contracts
 
     public static class ParameterSyntaxUtils
     {
+        public static bool TypeEquals(this TypeSyntax type, Type clrType, SemanticModel semanticModel)
+        {
+            var typeInfo = semanticModel.GetSymbolInfo(type).Symbol as ITypeSymbol;
+
+            if (typeInfo == null)
+            {
+                return false;
+            }
+
+            var clrSymbolType = semanticModel.Compilation.GetTypeByMetadataName(clrType.FullName);
+            return typeInfo.OriginalDefinition.Equals(clrSymbolType);
+        }
+
         public static bool IsNullable(this TypeSyntax type, SemanticModel semanticModel)
         {
             Contract.Requires(type != null);
@@ -46,7 +59,6 @@ namespace CodeContractor.Contracts
             // If parameter type is a value type, System.Nulable should be considered
             var systemNullable = semanticModel.Compilation.GetTypeByMetadataName(typeof(Nullable<>).FullName);
             return typeInfo.OriginalDefinition.Equals(systemNullable);
-
         }
 
         public static bool IsNullable(this ParameterSyntax parameter, SemanticModel semanticModel)

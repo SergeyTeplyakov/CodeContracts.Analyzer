@@ -16,25 +16,23 @@ namespace CodeContractor.Refactorings
     public sealed class AddNotNullEnsuresRefactoring : ICodeContractRefactoring
     {
         private readonly SyntaxNode _selectedNode;
-        private readonly Document _document;
+        private readonly SemanticModel _semanticModel;
 
-        private AddNotNullEnsuresRefactoring(SyntaxNode selectedNode, Document document)
+        private AddNotNullEnsuresRefactoring(SyntaxNode selectedNode, SemanticModel semanticModel)
         {
             Contract.Requires(selectedNode != null);
-            Contract.Requires(document != null);
+            Contract.Requires(semanticModel != null);
 
             _selectedNode = selectedNode;
-            _document = document;
+            _semanticModel = semanticModel;
         }
 
-        public static async Task<AddNotNullEnsuresRefactoring> Create(SyntaxNode selectedNode, Document document, CancellationToken cancellationToken = default(CancellationToken))
+        public static Task<AddNotNullEnsuresRefactoring> Create(SyntaxNode selectedNode, SemanticModel semanticModel, CancellationToken cancellationToken = default(CancellationToken))
         {
             Contract.Requires(selectedNode != null);
-            Contract.Requires(document != null);
+            Contract.Requires(semanticModel != null);
 
-            SemanticModel model = await document.GetSemanticModelAsync(cancellationToken);
-
-            return new AddNotNullEnsuresRefactoring(selectedNode, document);
+            return Task.FromResult(new AddNotNullEnsuresRefactoring(selectedNode, semanticModel));
         }
 
         public async Task<bool> IsAvailableAsync(CancellationToken token)
@@ -53,11 +51,26 @@ namespace CodeContractor.Refactorings
                 return false;
             }
 
-            var semanticModel = await _document.GetSemanticModelAsync(token);
-
-            return methodDeclaration.ReturnType.IsNullable(semanticModel) &&
+            return methodDeclaration.UnwrapReturnTypeIfNeeded(_semanticModel).IsNullable(_semanticModel) &&
+                   // Task is a special case. Ignore it! There is an assumption that Task should not be null. Adding
+                   // this ensures will just pollute the code
+                   !methodDeclaration.ReturnType.TypeEquals(typeof(Task), _semanticModel) &&
                    !methodDeclaration.IsAbstract() &&
-                   (!await methodDeclaration.EnsuresReturnValueIsNotNull(semanticModel, token));
+                   (!await methodDeclaration.EnsuresReturnValueIsNotNull(_semanticModel, token));
+        }
+
+        public async Task<Document> ApplyRefactoringAsync(Document document, CancellationToken token)
+        {
+            MethodDeclarationSyntax method = _selectedNode.AncestorsAndSelf().OfType<MethodDeclarationSyntax>().First();
+
+            Option<ExpressionStatementSyntax> lastRequires = await GetLastRequiresStatement(document, method, token);
+
+            SyntaxNode root = await document.GetSyntaxRootAsync(token);
+
+            SyntaxNode rootWithRequires = root.ReplaceNode(method, RequiresUtils.AddEnsures(method, _semanticModel, lastRequires));
+            SyntaxNode rootWithUsings = RequiresUtils.AddContractNamespaceIfNeeded(rootWithRequires);
+
+            return document.WithSyntaxRoot(rootWithUsings);
         }
 
         private static bool IsSelectedNodeSuiteableForRefactoring(SyntaxNode selectedNode)
@@ -67,23 +80,9 @@ namespace CodeContractor.Refactorings
             return selectedNode.AncestorsAndSelf().OfType<MethodDeclarationSyntax>() != null;
         }
 
-        public async Task<Document> ApplyRefactoringAsync(CancellationToken token)
+        private async Task<Option<ExpressionStatementSyntax>> GetLastRequiresStatement(Document document, MethodDeclarationSyntax method, CancellationToken token)
         {
-            MethodDeclarationSyntax method = _selectedNode.AncestorsAndSelf().OfType<MethodDeclarationSyntax>().First();
-
-            Option<ExpressionStatementSyntax> lastRequires = await GetLastRequiresStatement(method, token);
-
-            SyntaxNode root = await _document.GetSyntaxRootAsync(token);
-
-            SyntaxNode rootWithRequires = root.ReplaceNode(method, RequiresUtils.AddEnsures(method, lastRequires));
-            SyntaxNode rootWithUsings = RequiresUtils.AddContractNamespaceIfNeeded(rootWithRequires);
-
-            return _document.WithSyntaxRoot(rootWithUsings);
-        }
-
-        private async Task<Option<ExpressionStatementSyntax>> GetLastRequiresStatement(MethodDeclarationSyntax method, CancellationToken token)
-        {
-            var semanticModel = await _document.GetSemanticModelAsync(token);
+            var semanticModel = await document.GetSemanticModelAsync(token);
             var contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
 
             return contractBlock.Preconditions.LastOrDefault()?.CSharpStatement;

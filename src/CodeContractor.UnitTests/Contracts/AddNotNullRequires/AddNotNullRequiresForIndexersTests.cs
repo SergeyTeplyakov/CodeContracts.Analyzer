@@ -87,7 +87,7 @@ abstract class A
 
         internal override async Task<ICodeContractRefactoring> CreateRefactoringAsync(ClassTemplate doc)
         {
-            return await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.Document);
+            return await AddNotNullRequiresRefactoring.Create(doc.SelectedNode, doc.SemanticModel);
         }
     }
 }

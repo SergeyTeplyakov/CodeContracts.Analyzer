@@ -146,6 +146,35 @@ Contract.Ensures(Contract.Result<int ? >() != null);
             Assert.AreEqual(expected, newDocumentString);
         }
 
+        [Test]
+        public async Task Add_Ensures_For_Nullable_Task_Based_Method()
+        {
+            string src =
+@"using System.Threading.Tasks;
+internal class SampleClass
+{
+    private async Task<string> GetFoo()
+    {
+        ret{caret}urn string.Empty;
+    }
+}";
+            var newDocumentString = await ApplyRefactoring(src);
+            
+            string expected =
+@"using System.Threading.Tasks;
+using System.Diagnostics.Contracts;
+internal class SampleClass
+{
+    private async Task<string> GetFoo()
+    {
+Contract.Ensures(Contract.Result<string>() != null);
+        return string.Empty;
+    }
+}";
+            // Please note, that during IDE run Contract.Requires would have required leading trivia
+            Assert.AreEqual(expected, newDocumentString);
+        }
+
         internal override async Task<ICodeContractRefactoring> CreateRefactoringAsync(ClassTemplate doc)
         {
             return await AddNotNullEnsuresRefactoring.Create(doc.SelectedNode, doc.SemanticModel);
