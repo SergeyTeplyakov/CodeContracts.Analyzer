@@ -20,12 +20,8 @@ namespace CodeContractor.Contracts
             return AddRequires(parameter, method);
         }
 
-        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
+        public static BlockSyntax AddRequires(ParameterSyntax parameter, BlockSyntax block, Option<ExpressionStatementSyntax> anchor)
         {
-            Contract.Requires(parameter != null);
-            Contract.Requires(baseMethodDeclaration != null);
-            Contract.Requires(baseMethodDeclaration.Body != null);
-
             StatementSyntax notNullRequiresStatement = CreateNotNullRequiresFor(parameter).WithAdditionalAnnotations(Formatter.Annotation);
 
             int index = 0;
@@ -35,11 +31,20 @@ namespace CodeContractor.Contracts
             {
                 // New statement should be added after anchor.
                 // If anchor is not find, index would be 0
-                index = baseMethodDeclaration.Body.Statements.IndexOf(anchor.Value) + 1;
+                index = block.Statements.IndexOf(anchor.Value) + 1;
             }
 
-            SyntaxList<StatementSyntax> newStatements = baseMethodDeclaration.Body.Statements.Insert(index, notNullRequiresStatement);
-            BlockSyntax body = baseMethodDeclaration.Body.WithStatements(newStatements).WithAdditionalAnnotations(Formatter.Annotation);
+            SyntaxList<StatementSyntax> newStatements = block.Statements.Insert(index, notNullRequiresStatement);
+            return block.WithStatements(newStatements).WithAdditionalAnnotations(Formatter.Annotation);
+        }
+
+        public static BaseMethodDeclarationSyntax AddRequires(ParameterSyntax parameter, BaseMethodDeclarationSyntax baseMethodDeclaration, Option<ExpressionStatementSyntax> anchor = default(Option<ExpressionStatementSyntax>))
+        {
+            Contract.Requires(parameter != null);
+            Contract.Requires(baseMethodDeclaration != null);
+            Contract.Requires(baseMethodDeclaration.Body != null);
+
+            var body = AddRequires(parameter, baseMethodDeclaration.Body, anchor);
 
             var methodDeclaration = baseMethodDeclaration as MethodDeclarationSyntax;
             if (methodDeclaration != null)

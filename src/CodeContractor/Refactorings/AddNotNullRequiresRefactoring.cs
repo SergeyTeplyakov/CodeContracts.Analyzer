@@ -16,12 +16,15 @@ namespace CodeContractor.Refactorings
     public sealed class AddNotNullRequiresRefactoring : ICodeContractRefactoring
     {
         private readonly Option<ParameterSyntax> _parameter;
+        private readonly Option<MethodLikeSyntax> _enclosingMethod;
         private readonly SemanticModel _semanticModel;
 
         private AddNotNullRequiresRefactoring(Option<ParameterSyntax> parameter, SemanticModel semanticModel)
         {
             _parameter = parameter;
             _semanticModel = semanticModel;
+            
+            _enclosingMethod = parameter.Bind(MethodLikeSyntax.GetEnclosingMethod);
         }
 
         public static Task<AddNotNullRequiresRefactoring> Create(SyntaxNode node, SemanticModel semanticModel, CancellationToken cancellationToken = default(CancellationToken))
@@ -40,36 +43,30 @@ namespace CodeContractor.Refactorings
                 return false;
             }
 
+            
             return _parameter.Value.IsNullable(_semanticModel) && 
                   !_parameter.Value.IsDefaultedToNull() && 
-                  !_parameter.Value.DeclaredMethodIsAbstract() &&
-                  (!await _parameter.Value.CheckedInMethodContract(_semanticModel, token));
+                  !_enclosingMethod.Value.IsAbstract() &&
+                  (!await _enclosingMethod.Value.CheckedInMethodContract(_parameter.Value, _semanticModel, token));
         }
 
         public async Task<Document> ApplyRefactoringAsync(Document document, CancellationToken token)
         {
             Contract.Assert(_parameter.HasValue);
 
-            var method = _parameter.Value.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
-
-            if (method == null)
-            {
-                return document;
-            }
-
             SyntaxNode root = await document.GetSyntaxRootAsync(token);
+            SemanticModel semanticModel = await document.GetSemanticModelAsync(token);
 
-            var parent = await GetParentForCurrentParameter(document, method, token);
+            var rootWithRequires = root.ReplaceNode(_enclosingMethod.Value.CurrentMethod,
+                _enclosingMethod.Value.AddRequires(_parameter.Value, semanticModel));
 
-            var rootWithRequires = root.ReplaceNode(method, RequiresUtils.AddRequires(_parameter.Value, method, parent));
             var rootWithUsings = RequiresUtils.AddContractNamespaceIfNeeded(rootWithRequires);
-
             return document.WithSyntaxRoot(rootWithUsings);
         }
 
         public Option<ParameterSyntax> Parameter => _parameter;
 
-        private async Task<Option<ExpressionStatementSyntax>> GetParentForCurrentParameter(Document document, BaseMethodDeclarationSyntax method, CancellationToken token)
+        private Option<ExpressionStatementSyntax> GetParentForCurrentParameter(Document document, ContractBlock contractBlock)
         {
             Option<ParameterSyntax> previousParameter = GetPreviousParameter(_parameter.Value);
 
@@ -78,8 +75,8 @@ namespace CodeContractor.Refactorings
                 return new Option<ExpressionStatementSyntax>();
             }
 
-            var semanticModel = await document.GetSemanticModelAsync(token);
-            var contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
+            //var semanticModel = await document.GetSemanticModelAsync(token);
+            //var contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
 
             return contractBlock.Preconditions.LastOrDefault(p => p.UsesParameter(previousParameter.Value))?.CSharpStatement;
         }

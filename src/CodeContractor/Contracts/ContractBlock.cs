@@ -25,6 +25,27 @@ namespace CodeContractor.Contracts
             Postconditions = postconditions;
         }
 
+        public static Task<ContractBlock> CreateForMethodAsync(AccessorDeclarationSyntax methodDeclaration,
+            SemanticModel semanticModel, CancellationToken token = default(CancellationToken))
+        {
+            Contract.Requires(methodDeclaration != null);
+            Contract.Requires(semanticModel != null);
+            Contract.Ensures(Contract.Result<ContractBlock>() != null);
+
+            var contractStatements =
+                methodDeclaration.DescendantNodes()
+                    .OfType<ExpressionStatementSyntax>()
+                    .Select(e => CodeContractAssertion.Create(e, semanticModel))
+                    .Where(x => x.HasValue)
+                    .Select(x => x.Value)
+                    .ToList();
+
+            var preconditions = contractStatements.OfType<IPrecondition>().ToList();
+            var postconditions = contractStatements.OfType<ContractEnsures>().ToList();
+
+            return Task.FromResult(new ContractBlock(preconditions, postconditions));
+        }
+
         public static Task<ContractBlock> CreateForMethodAsync(BaseMethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel, CancellationToken token = default(CancellationToken))
         {
             Contract.Requires(methodDeclaration != null);

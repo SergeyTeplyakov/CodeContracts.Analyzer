@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using CodeContractor.Refactorings;
 using NUnit.Framework;
 
-namespace CodeContractor.UnitTests.Contracts
+namespace CodeContractor.UnitTests.Contracts.AddNotNullRequires
 {
     [TestFixture]
     public class AddNotNullRequiresAvailabilityTests
     {
-        [TestCaseSource("RefactoringAvailabilitySource")]
+        [TestCaseSource(nameof(RefactoringAvailabilitySource))]
         public async Task<bool> Test_Refactoring_Availability(string method)
         {
             var doc = await ClassTemplate.FromMethodAsync(method);

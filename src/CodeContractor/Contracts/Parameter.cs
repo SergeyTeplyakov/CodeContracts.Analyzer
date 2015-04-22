@@ -82,12 +82,32 @@ namespace CodeContractor.Contracts
             Contract.Requires(parameter != null);
 
             var method = parameter.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
+            if (method != null)
+            {
+                return method.IsAbstract();
+            }
+            
+            // Maybe parameter declared in the indexer
+            var indexer = parameter.AncestorsAndSelf().OfType<IndexerDeclarationSyntax>().FirstOrDefault();
+            if (indexer == null)
+            {
+                // That's strage!
+                Contract.Assert(false, "This should never happend!! Right?");
+                return false;
+            }
 
-            return method.IsAbstract();
+            return indexer.AccessorList.Accessors.FirstOrDefault().IsAbstract();
         }
 
         public static bool IsAbstract(this BaseMethodDeclarationSyntax methodDeclaration)
         {
+            // TODO: check for abstract keyword?
+            return methodDeclaration?.Body == null;
+        }
+
+        public static bool IsAbstract(this AccessorDeclarationSyntax methodDeclaration)
+        {
+            // TODO: check for abstract keyword?
             return methodDeclaration?.Body == null;
         }
 
@@ -105,9 +125,27 @@ namespace CodeContractor.Contracts
         public static async Task<bool> CheckedInMethodContract(this ParameterSyntax parameter, SemanticModel semanticModel, CancellationToken token)
         {
             BaseMethodDeclarationSyntax method = parameter.AncestorsAndSelf().OfType<BaseMethodDeclarationSyntax>().FirstOrDefault();
-            ContractBlock contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
+            if (method != null)
+            {
+                ContractBlock contractBlock = await ContractBlock.CreateForMethodAsync(method, semanticModel, token);
 
-            return contractBlock.Preconditions.Any(p => p.ChecksForNotNull(parameter));
+                return contractBlock.Preconditions.Any(p => p.ChecksForNotNull(parameter));
+            }
+
+            // It seems that this parameter was declared in indexer
+            var indexer = parameter.AncestorsAndSelf().OfType<IndexerDeclarationSyntax>().FirstOrDefault();
+            if (indexer == null)
+            {
+                // That's strage!
+                Contract.Assert(false, "This should never happend!! Right?");
+                return false;
+            }
+
+            return indexer.AccessorList.Accessors.All(a =>
+            {
+                ContractBlock contractBlock = ContractBlock.CreateForMethodAsync(a, semanticModel, token).Result;
+                return contractBlock.Preconditions.Any(p => p.ChecksForNotNull(parameter));
+            });
         }
     }
 

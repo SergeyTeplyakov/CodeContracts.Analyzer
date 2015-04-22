@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CodeContractor.Refactorings;
 using NUnit.Framework;
 
-namespace CodeContractor.UnitTests.Contracts
+namespace CodeContractor.UnitTests.Contracts.AddNotNullRequires
 {
     [TestFixture]
     public class AddNotNullRequiresForIndexers : CodeContractRefactoringBase
@@ -34,16 +31,60 @@ namespace CodeContractor.UnitTests.Contracts
 @"using System.Diagnostics.Contracts;
 abstract class A
 {  
-  public object this[string inde{caret}x]
+  public object this[string index]
   {
     get
     {
-      Contract.Requires(indexer != null);
+Contract.Requires(index != null);
       return new object();
     }
     set
     {
-      Contract.Requires(indexer != null);
+Contract.Requires(index != null);
+      Consonle.WriteLine(42);
+    }
+  }
+}";
+            // Please note, that during IDE run Contract.Requires would have required leading trivia
+            Assert.AreEqual(expected, newDocumentString);
+        }
+
+        [Test]
+        public async Task AddPreconditionToSetterIndexer()
+        {
+            string src =
+@"using System.Diagnostics.Contracts;
+abstract class A
+{  
+  public object this[string inde{caret}x]
+  {
+    get
+    {
+      Contract.Requires(index != null);
+      return new object();
+    }
+    set
+    {
+      Consonle.WriteLine(42);
+    }
+  }
+}";
+            var newDocumentString = await ApplyRefactoring(src);
+
+            string expected =
+@"using System.Diagnostics.Contracts;
+abstract class A
+{  
+  public object this[string index]
+  {
+    get
+    {
+      Contract.Requires(index != null);
+      return new object();
+    }
+    set
+    {
+Contract.Requires(index != null);
       Consonle.WriteLine(42);
     }
   }
@@ -74,9 +115,9 @@ abstract class A
 {  
   public object this[string index]
   {
-    se{caret}t
+    set
     {
-      Contract.Requires(value != null);
+Contract.Requires(value != null);
       Consonle.WriteLine(42);
     }
   }
